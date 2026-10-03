@@ -6,8 +6,14 @@
 
 到 [Releases](https://github.com/linyicheng592-code/PolaDan/releases/latest) 下载最新版本：
 
-- **Mac**：`PolaDan-Mac-版本号.zip`
-- **Windows**：`PolaDan-Windows-版本号.zip`
+- **Mac**
+1. 解压后双击「安装到Mac.command」。
+2. 如果弹出「Apple 无法验证……是否包含恶意软件」，点「完成」（不要移到废纸篓），然后打开 **系统设置 → 隐私与安全性**，拉到最下面，在「已阻止"安装到Mac.command"」旁边点 **「仍要打开」**，输入开机密码后再点「打开」。
+   - 老版本 macOS 也可以直接右键「安装到Mac.command」→ 打开。
+   - 备用方法：打开「终端」，输入 `bash `（bash 加一个空格），把「安装到Mac.command」拖进终端窗口，按回车。
+3. 脚本会下载运行环境（约 110MB），装进「应用程序」并自动打开。Apple 芯片和 Intel 都支持。
+
+**Windows**：`PolaDan-Windows-版本号.zip`
 
 ## 安装
 
