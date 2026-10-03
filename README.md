@@ -1,13 +1,13 @@
 # PolaDan
 
-拍立得换框工具：用实体拍立得相纸逐张扫描的边框，给你的照片换上各种联名款、特别版边框。支持 Mac、Windows 和 iPhone。
+拍立得换框工具：用实体拍立得相纸逐张扫描的边框，给你的照片换上各种联名款、特别版边框。支持 Mac 和 Windows。
 
 ## 下载
 
 到 [Releases](https://github.com/linyicheng592-code/PolaDan/releases/latest) 下载最新版本：
 
-- **Mac / Windows**：`PolaDan-Desktop-Mac-Windows-版本号.zip`
-- **iPhone**：`PolaDan-iPhone-Xcode-版本号.zip`（需要一台 Mac 和 Xcode 自行安装）
+- **Mac**：`PolaDan-Mac-版本号.zip`
+- **Windows**：`PolaDan-Windows-版本号.zip`
 
 ## 安装
 
@@ -18,9 +18,6 @@
 **Windows**
 1. 解压后双击「安装到Windows.bat」。如果出现蓝色的 SmartScreen 提示，点「更多信息」→「仍要运行」。
 2. 装好后，桌面和开始菜单里都有「PolaDan」。
-
-**iPhone**
-用 Xcode 打开 `PolaDan.xcodeproj`，选自己的开发者账号签名后运行到手机。详细步骤见压缩包里的「使用说明.txt」。
 
 ## 更新
 
