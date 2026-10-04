@@ -950,6 +950,47 @@ function decorate(){
   document.documentElement.classList.add("i18n-ready");
 }
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",decorate);else decorate();
+
+/* ---------- 手机上导出直接存进相册：用系统分享面板（iPhone「存储图像」、安卓「保存到相册」） ---------- */
+(()=>{
+  const touch=matchMedia("(pointer:coarse)").matches;
+  const can=files=>{try{return !!(navigator.share&&navigator.canShare&&navigator.canShare({files}))}catch(_){return false}};
+  let probe=false;try{probe=can([new File([new Uint8Array([0])],"probe.png",{type:"image/png"})])}catch(_){}
+  if(!touch||!probe)return;     // 电脑和不支持的浏览器（如微信内置）保持原来的下载方式
+  const T=k=>LANG==="en"?{ready:n=>n>1?`${n} photos ready`:"Your photo is ready",save:"Save to Photos",cancel:"Cancel",hint:"Then tap “Save Image” in the share sheet"}[k]:{ready:n=>n>1?`${n} 张已生成`:"已生成",save:"存到相册",cancel:"取消",hint:"在弹出的面板里点「存储图像」"}[k];
+  const st=document.createElement("style");st.textContent=
+    ".ps-ov{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.35);display:flex;align-items:flex-end;justify-content:center;padding:16px;padding-bottom:calc(16px + env(safe-area-inset-bottom,0px))}"+
+    ".ps-box{width:min(420px,100%);background:var(--surface,#fff);color:var(--ink,#111);border-radius:16px;padding:18px;display:grid;gap:10px;box-shadow:0 10px 40px rgba(0,0,0,.25)}"+
+    ".ps-box b{font-size:16px}.ps-box small{color:var(--faint,#888);font-size:12.5px}"+
+    ".ps-box .row{display:flex;gap:8px}.ps-box .row button{flex:1;justify-content:center;padding:12px;border-radius:12px;font-size:15px;font-weight:600}";
+  document.head.appendChild(st);
+  // 生成大图需要时间，浏览器可能认为「点击已过期」而拒绝弹分享面板；这时弹一个按钮让用户再点一下
+  const ask=(files,share)=>new Promise(res=>{
+    const ov=document.createElement("div");ov.className="ps-ov";ov.setAttribute("translate","no");
+    ov.innerHTML=`<div class="ps-box" role="dialog" aria-modal="true"><b>${T("ready")(files.length)}</b><small>${T("hint")}</small><div class="row"><button type="button" class="btn ps-no">${T("cancel")}</button><button type="button" class="btn primary ps-go">${T("save")}</button></div></div>`;
+    document.body.appendChild(ov);const done=r=>{ov.remove();res(r)};
+    ov.querySelector(".ps-no").onclick=()=>done("declined");
+    ov.querySelector(".ps-go").onclick=()=>share().then(()=>done("saved"),e=>done(e&&e.name==="AbortError"?"declined":null));
+  });
+  async function toPhotos(files){
+    if(!can(files))return null;
+    const share=()=>navigator.share({files});
+    try{await share();return"saved"}
+    catch(e){
+      if(e&&e.name==="AbortError")return"declined";
+      if(e&&e.name==="NotAllowedError")return await ask(files,share);
+      return null}
+  }
+  const asFile=(name,blob)=>new File([blob],name,{type:blob.type||"image/png"});
+  const orig=window.__nativeSave;
+  window.__nativeSave=async(name,blob)=>{
+    if(/^image\//.test(blob.type||"")){const r=await toPhotos([asFile(name,blob)]);if(r)return r}
+    return orig(name,blob)};
+  window.__nativeSaveMany=async items=>{
+    const r=await toPhotos(items.map(it=>asFile(it.name,it.blob)));if(r)return r;
+    for(const it of items)await orig(it.name,it.blob);return"saved"};
+  window.__photosShare=true;
+})();
 })();
 
 /* 本地版存储：IndexedDB 模拟网页版的 db / assets / downloads，原生壳负责保存文件 */
@@ -1679,7 +1720,7 @@ $("#save").addEventListener("click",async()=>{
     if(items.length>1&&window.__nativeSaveMany){const r=await window.__nativeSaveMany(items);saved=r!=="declined";if(!saved)toast("已取消保存")}
     else{
       let dl=null;try{dl=window.claude&&window.claude.use?await window.claude.use("downloads"):null}catch(_){dl=null}
-      const file=items.length>1?{filename:window.__tr?window.__tr(`poladan-${items.length}张-${d}.zip`):`poladan-${items.length}张-${d}.zip`,data:await makeZip(items)}:{filename:items[0].name,data:items[0].blob};
+      const file=items.length>1?{filename:`poladan-${items.length}-photos-${d}.zip`,data:await makeZip(items)}:{filename:items[0].name,data:items[0].blob};
       if(dl){try{await dl.save(file);saved=true}
         catch(err){if(err&&err.code==="declined")toast("已取消保存");else if(err&&err.code==="rate_limited")toast("上一个保存还没确认");else if(items.length===1){showModal(items[0].blob);saved=true}else toast("这里存不了多张，请逐张导出")}}
       else if(items.length===1){showModal(items[0].blob);saved=true}
