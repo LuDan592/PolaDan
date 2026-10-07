@@ -1,0 +1,26 @@
+# 推送 release-drop 分支时自动发布 GitHub Release：
+# 读取 VERSION，用 notes.md 作说明，把目录里的 zip 作为附件；已存在同名版本则更新说明并覆盖附件
+name: Publish release
+on:
+  push:
+    branches: [release-drop]
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create or update release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VER=$(cat VERSION | tr -d '[:space:]')
+          TAG="v$VER"
+          if gh release view "$TAG" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release edit "$TAG" -R "$GITHUB_REPOSITORY" --title "PolaDan $VER" --notes-file notes.md --latest
+            gh release upload "$TAG" -R "$GITHUB_REPOSITORY" *.zip --clobber
+          else
+            gh release create "$TAG" -R "$GITHUB_REPOSITORY" --target main --title "PolaDan $VER" --notes-file notes.md --latest *.zip
+          fi
+          gh release view "$TAG" -R "$GITHUB_REPOSITORY" --json tagName,url,assets --jq '.tagName, .url, (.assets[].name)'
